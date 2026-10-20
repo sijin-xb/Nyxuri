@@ -132,7 +132,7 @@ DashboardCard {
         root.hoverIndex = 0;
         for (let i = 0; i < laneRepeater.count; i += 1) {
         const lane = laneRepeater.itemAt(i);
-        if (root.containsPoint(lane, root.pointerX, root.pointerY)) {
+        if (lane && root.containsPoint(lane, root.pointerX, root.pointerY)) {
         root.hoverLane = lane.laneId;
         root.hoverIndex = root.insertIndex(lane, root.pointerX, root.pointerY);
         return;
