@@ -62,10 +62,6 @@ DashboardCard {
                 used[id] = true;
             });
         });
-        // Hide the chip being dragged from the pool as well — otherwise the
-        // pool keeps showing a copy of it next to the ghost under the pointer.
-        if (root.drag)
-            used[root.drag.id] = true;
         const out = [];
         barWidgets.all.forEach(w => {
             if (!used[w.id])
@@ -110,7 +106,6 @@ DashboardCard {
         root.pointerX = pos.x;
         root.pointerY = pos.y;
         root.updateHover();
-        root.refreshLanes();
     }
 
     function containsPoint(lane, x, y) {
@@ -210,13 +205,15 @@ DashboardCard {
         readonly property bool beingDragged: !ghost && root.drag !== null && root.drag.id === widgetId
 
         implicitHeight: 34
-        implicitWidth: isGap ? root.dragWidth : (beingDragged ? 0 : Math.max(chipRow.implicitWidth, 16) + 24)
+        implicitWidth: isGap ? root.dragWidth : Math.max(chipRow.implicitWidth, 16) + 24
         radius: height / 2
         color: isGap ? "transparent" : (lane === "pool" ? Qt.rgba(1, 1, 1, 0.1) :
         Appearance.colors.colSecondaryContainer)
 
         border.width: isGap ? 2 : 0
         border.color: Appearance.colors.colPrimary
+        // Keep the geometry while hiding the visual: collapsing the chip would
+        // reflow the lane and shift insertIndex targets mid-drag.
         opacity: beingDragged ? 0 : (isGap ? 0.7 : 1)
         Behavior on implicitWidth {
         NumberAnimation {
@@ -290,8 +287,10 @@ DashboardCard {
         const p = root.mapFromItem(mouseArea, mouse.x, mouse.y);
         root.pointerX = p.x;
         root.pointerY = p.y;
+        // No refreshLanes here: the model must stay untouched for the whole
+        // drag. Reassigning the array mid-drag re-evaluates the Repeater's
+        // model binding and can drop the delegate holding the mouse grab.
         root.updateHover();
-        root.refreshLanes();
     }
         onReleased: () => root.finishDrag()
         onCanceled: () => root.finishDrag()
