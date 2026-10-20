@@ -12,11 +12,10 @@ import qs.shared.i18n
 // Ported from end4-pC's modules/ii/settings/DashboardContent.qml.
 //
 // Scope note: this port covers the shell only — window chrome, toolbar, nav,
-// grid geometry and the entry/exit choreography. end4-pC's five pages (Home,
-// Wallpapers, Presets, Media, Settings) are separate 4-8k line trees bound to
-// its own config schema; here every page renders the same card grid built by
-// buildPage(), so the layout is identical while the content stays a placeholder
-// until each page is ported.
+// grid geometry and the entry/exit choreography. All five pages (Home,
+// Wallpapers, Themes, Media, Settings) have real implementations rendered
+// through their own Loaders; end4-pC's shared placeholder card grid was
+// dropped along with its keyboard card selection.
 Item {
     id: root
 
@@ -25,12 +24,9 @@ Item {
     signal sidebarToggleRequested
 
     property var todoService: null
-
     property int currentPage: 0
     property int pendingPage: 0
     property int staggerMs: 45
-    property var pageBoxes: buildPage(0)
-    property int selectedIndex: 0
     property bool searchOpen: false
     property string searchQuery: ""
 
@@ -152,45 +148,19 @@ Item {
         const index = root.pageNames.findIndex(page => page.id === wanted);
         if (index < 0)
             return false;
-        if (index !== root.currentPage) {
-            root.pendingPage = index;
-            root.currentPage = index;
-            root.selectedIndex = 0;
-            root.pageBoxes = root.buildPage(index);
-        }
+        if (index !== root.currentPage)
+            root.goToPage(index);
         return true;
     }
 
-    // Card spans per page, in units of a 4-column grid. Copied verbatim from
-    // end4-pC so the grid silhouette matches.
-    readonly property var layouts: [[[2, 2], [1, 1], [1, 1], [1, 1], [1, 1], [2, 1], [1, 1], [1, 1]], [[1, 1], [1, 1], [2, 1], [1, 2], [2, 1], [1, 2], [1, 1], [1, 1]], [[4, 1], [2, 1], [2, 1], [1, 1], [1, 1], [1, 1], [1, 1]], [[2, 2], [2, 1], [2, 1], [2, 1], [1, 1], [1, 1]], [[1, 1], [1, 1], [1, 1], [1, 1], [2, 2], [2, 1], [2,
-                                                                                                                                                                                                                                                                                                                                      1]]]
-
-    readonly property var cardPalette: [
-        {
-            "bg": Appearance.colors.colPrimaryContainer,
-            "fg": Appearance.colors.colOnPrimaryContainer
-        },
-        {
-            "bg": Appearance.colors.colSecondaryContainer,
-            "fg": Appearance.colors.colOnSecondaryContainer
-        },
-        {
-            "bg": Appearance.colors.colTertiaryContainer,
-            "fg": Appearance.colors.colOnTertiaryContainer
-        },
-        {
-            "bg": Appearance.colors.colLayer1,
-            "fg": Appearance.colors.colOnLayer1
-        },
-        {
-            "bg": Appearance.colors.colSurfaceContainerHigh,
-            "fg": Appearance.colors.colOnLayer1
-        }
-    ]
-
-    readonly property var icons: ["wallpaper", "palette", "style", "download", "upload", "favorite", "tune",
-        "widgets", "auto_awesome", "dark_mode"]
+    // Degraded deep-link search: the dashboard has no per-row search anchors,
+    // so land on the settings page and let its query filter do the narrowing.
+    function openSearchTerm(text) {
+        root.goToPage(root.settingsPage);
+        root.openSearch();
+        searchInput.text = String(text ?? "");
+        searchInput.cursorPosition = searchInput.text.length;
+    }
 
     // Nerd Font distro mark. Nyxuri renders these as glyphs (same map as
     // UserCard) instead of end4-pC's themed icon lookup, so the pill keeps its
@@ -212,41 +182,10 @@ Item {
     readonly property string distroGlyph: root.distroGlyphs[String(SystemIdentityService.distroId
                                                                    || "").toLowerCase()] || ""
 
-    function shuffled(list) {
-        const copy = list.slice();
-        for (let i = copy.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            const t = copy[i];
-            copy[i] = copy[j];
-            copy[j] = t;
-        }
-        return copy;
-    }
-
-    // Builds one page of placeholder cards. end4-pC returns [] for its five real
-    // pages and only uses this for pages it has no content for; here it backs
-    // every page, which is what keeps the grid geometry identical.
-    function buildPage(page) {
-        const spans = layouts[page % layouts.length];
-        return spans.map((s, i) => {
-            const c = cardPalette[Math.floor(Math.random() * cardPalette.length)];
-            return {
-                "colSpan": s[0],
-                "rowSpan": s[1],
-                "bg": c.bg,
-                "fg": c.fg,
-                "icon": icons[Math.floor(Math.random() * icons.length)],
-                "travelX": (Math.random() - 0.5) * 500,
-                "travelY": (Math.random() - 0.5) * 400
-            };
-        });
-    }
-
     function goToPage(index) {
         if (index === currentPage || switchTimer.running)
             return;
         pendingPage = index;
-        pageExitRequested();
         forceActiveFocus();
         switchTimer.restart();
     }
@@ -260,36 +199,6 @@ Item {
         searchInput.text = "";
         searchOpen = false;
         forceActiveFocus();
-    }
-
-    function moveSelection(dx, dy) {
-        const cur = boxRepeater.itemAt(selectedIndex);
-        if (!cur)
-            return;
-        const cx = cur.x + cur.width / 2;
-        const cy = cur.y + cur.height / 2;
-        let best = -1;
-        let bestScore = Infinity;
-        for (let i = 0; i < boxRepeater.count; i++) {
-            if (i === selectedIndex)
-                continue;
-            const it = boxRepeater.itemAt(i);
-            if (!it)
-                continue;
-            const ox = it.x + it.width / 2 - cx;
-            const oy = it.y + it.height / 2 - cy;
-            const along = dx !== 0 ? ox * dx : oy * dy;
-            const across = dx !== 0 ? Math.abs(oy) : Math.abs(ox);
-            if (along <= 1)
-                continue;
-            const score = along + across * 2;
-            if (score < bestScore) {
-                bestScore = score;
-                best = i;
-            }
-        }
-        if (best >= 0)
-            selectedIndex = best;
     }
 
     function typedCharacter(event) {
@@ -306,8 +215,6 @@ Item {
         Qt.callLater(() => searchInput.forceActiveFocus());
     }
 
-    signal pageExitRequested
-
     focus: true
 
     Component.onCompleted: forceActiveFocus()
@@ -323,14 +230,6 @@ Item {
                 closeSearch();
             else
                 openSearch();
-        } else if (event.key === Qt.Key_Left) {
-            moveSelection(-1, 0);
-        } else if (event.key === Qt.Key_Right) {
-            moveSelection(1, 0);
-        } else if (event.key === Qt.Key_Up) {
-            moveSelection(0, -1);
-        } else if (event.key === Qt.Key_Down) {
-            moveSelection(0, 1);
         } else if (event.key === Qt.Key_Tab) {
             goToPage((pendingPage + 1) % pageNames.length);
         } else if (event.key === Qt.Key_Backtab) {
@@ -346,12 +245,8 @@ Item {
     Timer {
         id: switchTimer
 
-        interval: 320 + Math.max(root.pageBoxes.length, 6) * (root.staggerMs - 4)
-        onTriggered: {
-            root.currentPage = root.pendingPage;
-            root.selectedIndex = 0;
-            root.pageBoxes = root.buildPage(root.currentPage);
-        }
+        interval: 320 + 6 * (root.staggerMs - 4)
+        onTriggered: root.currentPage = root.pendingPage
     }
 
     // Album-art backdrop for the media page. Three stacked pieces, matching
@@ -676,84 +571,6 @@ Item {
                         text: "account_circle"
                         iconSize: 30
                         color: root.ui.fgContainer
-                    }
-                }
-            }
-        }
-
-        GridLayout {
-            id: boxGrid
-
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            // Only the pages that have not been ported yet fall back to the
-            // placeholder grid; ported pages render through their own Loader.
-            visible: !root.homeImplemented && !root.settingsImplemented && !root.wallpapersImplemented &&
-                     !root.mediaImplemented && !root.themesImplemented
-            columns: 4
-            rowSpacing: 12
-            columnSpacing: 12
-
-            Repeater {
-                id: boxRepeater
-
-                model: root.pageBoxes
-
-                delegate: DashboardCard {
-                    id: boxDelegate
-
-                    required property int index
-                    required property var modelData
-
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: 1
-                    Layout.preferredHeight: 1
-                    Layout.rowSpan: boxDelegate.modelData.rowSpan
-                    Layout.columnSpan: boxDelegate.modelData.colSpan
-
-                    tint: boxDelegate.modelData.bg
-                    pager: root
-                    animIndex: boxDelegate.index
-                    staggerMs: root.staggerMs
-                    travelX: boxDelegate.modelData.travelX
-                    travelY: boxDelegate.modelData.travelY
-
-                    readonly property bool selected: root.selectedIndex === boxDelegate.index
-
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        spacing: 4
-
-                        MaterialSymbol {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: boxDelegate.modelData.icon
-                            iconSize: 32
-                            color: boxDelegate.modelData.fg
-                        }
-
-                        StyledText {
-                            Layout.alignment: Qt.AlignHCenter
-                            text: I18n.tr("Card") + " " + (boxDelegate.index + 1)
-                            color: boxDelegate.modelData.fg
-                        }
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: boxDelegate.cardRadius
-                        color: "transparent"
-                        border.width: boxDelegate.selected ? 3 : 0
-                        border.color: Appearance.colors.colPrimary
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.selectedIndex = boxDelegate.index;
-                            root.forceActiveFocus();
-                        }
                     }
                 }
             }

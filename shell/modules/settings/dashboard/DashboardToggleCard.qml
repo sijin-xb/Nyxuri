@@ -31,7 +31,7 @@ DashboardCard {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 14
-        spacing: 0
+        spacing: 8
 
         RowLayout {
             Layout.fillWidth: true

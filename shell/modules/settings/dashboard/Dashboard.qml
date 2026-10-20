@@ -53,7 +53,17 @@ FloatingWindow {
             dashboardLoader.item.closeChildWindows();
     }
 
+    // The dashboard has no per-row search anchors, so it can't honour the
+    // highlight-the-row contract. Degrade to the settings page with the query
+    // typed into its filter box, then answer "cancelled" so SettingsBackend
+    // drops the target instead of polling for an anchor that will never exist.
     function prepareSearchTarget(entry, serial) {
+        if (dashboardLoader.item && entry)
+            dashboardLoader.item.openSearchTerm(entry.title);
+        return "cancelled";
+    }
+
+    function advanceSearchTarget(entry, serial) {
         return "cancelled";
     }
 
@@ -86,13 +96,24 @@ FloatingWindow {
     Material.theme: PersonalizationConfig.themeMode === "light" ? Material.Light : Material.Dark
 
     // The card grid animates from its own geometry; creating it before the
-    // window has settled makes the first stagger read as a jump.
+    // window has settled makes the first stagger read as a jump. Resize after
+    // settle keeps the content alive — the Loader stays active and the cards
+    // simply re-lay out, no teardown.
     property bool settled: false
 
-    onWidthChanged: settleTimer.restart()
-    onHeightChanged: settleTimer.restart()
+    onWidthChanged: {
+        if (root.visible && !root.settled)
+            settleTimer.restart();
+    }
+    onHeightChanged: {
+        if (root.visible && !root.settled)
+            settleTimer.restart();
+    }
     onVisibleChanged: {
-        if (!root.visible && root._wasShown) {
+        if (root.visible) {
+            if (!root.settled)
+                settleTimer.restart();
+        } else if (root._wasShown) {
             root._wasShown = false;
             root.popoutClosed();
         }

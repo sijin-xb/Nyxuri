@@ -104,7 +104,7 @@ DashboardCard {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 12
+        anchors.margins: 14
         spacing: 12
 
         // Fixed-width heading column so the option rows always start at the same
@@ -116,7 +116,6 @@ DashboardCard {
 
             RowLayout {
                 anchors.fill: parent
-                anchors.margins: 14
                 spacing: 12
 
                 MaterialShapeWrappedMaterialSymbol {

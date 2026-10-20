@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.shared.theme
@@ -93,7 +94,7 @@ DashboardCard {
         }));
     }
 
-        function syncModel(model, items, key) {
+    function syncModel(model, items, key) {
         const sig = items.map(it => it.id + (it.gap ? ":g" : "")).join(",");
         if (root.lastSynced[key] === sig)
         return;
@@ -102,18 +103,18 @@ DashboardCard {
         items.forEach(it => model.append(it));
     }
 
-        function refreshLanes() {
+    function refreshLanes() {
         syncModel(leftModel, desiredItems("left"), "left");
         syncModel(middleModel, desiredItems("middle"), "middle");
         syncModel(rightModel, desiredItems("right"), "right");
         syncModel(poolModel, availableItems(), "pool");
     }
 
-        function laneHovered(laneId) {
+    function laneHovered(laneId) {
         return root.drag !== null && root.hoverLane === laneId;
     }
 
-        function beginDrag(widgetId, lane, slot, pos, width) {
+    function beginDrag(widgetId, lane, slot, pos, width) {
         root.drag = {
         id: widgetId,
         from: lane,
@@ -126,12 +127,12 @@ DashboardCard {
         root.refreshLanes();
     }
 
-        function containsPoint(lane, x, y) {
+    function containsPoint(lane, x, y) {
         const p = lane.mapFromItem(root, x, y);
         return p.x >= 0 && p.y >= 0 && p.x <= lane.width && p.y <= lane.height;
     }
 
-        function insertIndex(lane, x, y) {
+    function insertIndex(lane, x, y) {
         let before = 0;
         for (let i = 0; i < lane.chipRepeater.count; i += 1) {
         const chip = lane.chipRepeater.itemAt(i);
@@ -145,7 +146,7 @@ DashboardCard {
         return before;
     }
 
-        function updateHover() {
+    function updateHover() {
         root.hoverLane = "";
         root.hoverIndex = 0;
         for (let i = 0; i < laneRepeater.count; i += 1) {
@@ -160,7 +161,7 @@ DashboardCard {
         root.hoverLane = "pool";
     }
 
-        function removeWidget(lane, slot) {
+    function removeWidget(lane, slot) {
         if (lane === "pool" || lane === "")
         return;
         const cur = baseItems(lane).slice();
@@ -177,7 +178,7 @@ DashboardCard {
         root.refreshLanes();
     }
 
-        function finishDrag() {
+    function finishDrag() {
         if (root.drag === null)
         return;
         const d = root.drag;
@@ -211,7 +212,7 @@ DashboardCard {
 
         // ---- visual primitives -------------------------------------------------
 
-        component Chip: Rectangle {
+    component Chip: Rectangle {
         property string widgetId: ""
         property string lane: ""
         property int slot: -1
@@ -311,7 +312,7 @@ DashboardCard {
     }
     }
 
-        component Lane: Rectangle {
+    component Lane: Rectangle {
         id: laneRoot
 
         property string laneId: ""
@@ -422,7 +423,7 @@ DashboardCard {
 
         StyledText {
         text: root.title
-        font.pixelSize: 19
+        font.pixelSize: Typography.titleLarge.pixelSize
         font.weight: Font.DemiBold
         color: Appearance.colors.colOnLayer1
     }
@@ -544,15 +545,15 @@ DashboardCard {
         Connections {
         target: PersonalizationConfig
 
-        function onBarLayoutLeftChanged() {
+    function onBarLayoutLeftChanged() {
         root.refreshLanes();
     }
 
-        function onBarLayoutMiddleChanged() {
+    function onBarLayoutMiddleChanged() {
         root.refreshLanes();
     }
 
-        function onBarLayoutRightChanged() {
+    function onBarLayoutRightChanged() {
         root.refreshLanes();
     }
     }

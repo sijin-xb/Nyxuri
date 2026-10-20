@@ -31,7 +31,7 @@ DashboardCard {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 14
-        spacing: 0
+        spacing: 8
 
         RowLayout {
             Layout.fillWidth: true
@@ -56,6 +56,13 @@ DashboardCard {
                 wrapMode: Text.WordWrap
                 maximumLineCount: 2
                 elide: Text.ElideRight
+            }
+
+            StyledText {
+                text: Math.round(root.current)
+                font.pixelSize: 28
+                font.weight: Font.Light
+                color: Appearance.colors.colOnPrimaryContainer
             }
         }
 
@@ -103,15 +110,5 @@ DashboardCard {
                 }
             }
         }
-    }
-
-    StyledText {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 14
-        text: Math.round(root.current)
-        font.pixelSize: 28
-        font.weight: Font.Light
-        color: Appearance.colors.colOnPrimaryContainer
     }
 }
