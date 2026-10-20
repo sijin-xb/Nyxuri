@@ -402,15 +402,8 @@ Item {
                             const step = event.angleDelta.y !== 0 ? event.angleDelta.y : event.pixelDelta.y;
                             const max = Math.max(0, schemeScroller.contentWidth - schemeScroller.width);
                             const desired = schemeScroller.contentX - step;
-                            if (desired >= 0 && desired <= max) {
+                            if (desired >= 0 && desired <= max)
                                 schemeScroller.contentX = desired;
-                                return;
-                            }
-                            // Reached a horizontal edge: hand the gesture to the page
-                            // scroller when it exposes one.
-                            const p = root.pager;
-                            if (p && typeof p.scrollSettingsBy === "function")
-                                p.scrollSettingsBy(-step);
                         }
                     }
 

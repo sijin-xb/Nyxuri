@@ -416,6 +416,7 @@ QtObject {
                 {
                     "type": "slider",
                     "key": "wallpaper:Overview blur radius",
+                    "percent": false,
                     "title": I18n.tr("Overview blur radius"),
                     "icon": "blur_on"
                 },
@@ -428,12 +429,14 @@ QtObject {
                 {
                     "type": "slider",
                     "key": "wallpaper:Overview saturation",
+                    "percent": false,
                     "title": I18n.tr("Overview saturation"),
                     "icon": "water_drop"
                 },
                 {
                     "type": "slider",
                     "key": "wallpaper:Overview contrast",
+                    "percent": false,
                     "title": I18n.tr("Overview contrast"),
                     "icon": "contrast"
                 },
@@ -458,6 +461,7 @@ QtObject {
                 {
                     "type": "slider",
                     "key": "wallpaper:Parallax preferred scale",
+                    "percent": false,
                     "title": I18n.tr("Parallax preferred scale"),
                     "icon": "zoom_in"
                 },
@@ -555,6 +559,7 @@ QtObject {
                 {
                     "type": "slider",
                     "key": "dock:Icon size",
+                    "percent": false,
                     "title": I18n.tr("Icon size"),
                     "icon": "photo_size_select_large"
                 },
@@ -567,6 +572,7 @@ QtObject {
                 {
                     "type": "slider",
                     "key": "dock:Magnification",
+                    "percent": false,
                     "title": I18n.tr("Magnification"),
                     "icon": "zoom_out_map"
                 },
@@ -603,6 +609,7 @@ QtObject {
                 {
                     "type": "slider",
                     "key": "dock:Preview size",
+                    "percent": false,
                     "title": I18n.tr("Preview size"),
                     "icon": "aspect_ratio"
                 },
@@ -765,12 +772,14 @@ QtObject {
                 {
                     "type": "slider",
                     "key": "gamma:Gamma",
+                    "percent": false,
                     "title": I18n.tr("Gamma"),
                     "icon": "tonality"
                 },
                 {
                     "type": "slider",
                     "key": "gamma:Contrast",
+                    "percent": false,
                     "title": I18n.tr("Contrast"),
                     "icon": "contrast"
                 },

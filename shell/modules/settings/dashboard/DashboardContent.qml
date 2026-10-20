@@ -242,10 +242,14 @@ Item {
         event.accepted = true;
     }
 
+    // Card exit is a staggered fade (exitAnim in DashboardCard); the incoming
+    // page's creation is the expensive half and runs asynchronously, so 220ms
+    // of fade overlap is enough — waiting out the old page's full travel
+    // animation added ~300ms of dead air to every switch.
     Timer {
         id: switchTimer
 
-        interval: 320 + 6 * (root.staggerMs - 4)
+        interval: 220
         onTriggered: root.currentPage = root.pendingPage
     }
 
@@ -583,6 +587,7 @@ Item {
             Layout.fillHeight: true
             visible: active
             active: root.themesImplemented
+            asynchronous: true
 
             sourceComponent: DashboardThemesPage {
                 pager: root
@@ -623,6 +628,7 @@ Item {
             Layout.fillHeight: true
             visible: active
             active: root.wallpapersImplemented
+            asynchronous: true
 
             sourceComponent: DashboardWallpapersPage {
                 pager: root
@@ -637,6 +643,7 @@ Item {
             Layout.fillHeight: true
             visible: active
             active: root.settingsImplemented
+            asynchronous: true
 
             sourceComponent: DashboardSettingsPage {
                 pager: root
