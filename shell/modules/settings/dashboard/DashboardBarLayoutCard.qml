@@ -447,6 +447,7 @@ DashboardCard {
         ]
 
         delegate: Lane {
+        required property var modelData
         laneId: modelData.id
         laneLabel: modelData.label
         model: modelData.id === "left" ? root.leftItems : modelData.id === "middle" ? root.middleItems : root.rightItems
